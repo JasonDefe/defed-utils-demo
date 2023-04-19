@@ -4,6 +4,16 @@ import { useApproveToDefedProtocol, useDepositToDefedProtocol, useWithdrawFromDe
 import { getAssetsBalance } from 'defedtestsdk'
 import { useWeb3Context } from "./hooks/useWeb3Context";
 import { WalletType } from "./constants/WalletOptions";
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link
+} from "react-router-dom";
+ 
+import Dashboard from './Dashboard';
+import Auth from './auth';
 
 //0x7540781616FEc8C504E770784b8F690835aCe2A1
 //测试 Polygon USDT 入金
@@ -20,7 +30,7 @@ const withdrawData = {
   signature: '0xaedaad6af01ca618f746d2fe2ec6210d9c6c00b5d5ed49388892f80fb7e493d84a2effd12e72eb53313fd1dfb2213aaee1a5b160f0c9655b44d41c3af0c3def201',
 }
 
-function App() {
+export default function App() {
   //测试 存100USDT 需要带精度
   const _amount = '100000000'
   const { currentAccount, connectWallet, chainId, signTxData } = useWeb3Context()
@@ -107,25 +117,30 @@ function App() {
   }
 
   return (
-    <div className="App">
-      <button onClick={() => connectWallet(WalletType.INJECTED)}>Connect wallet</button>
-      <div>user address:{currentAccount}</div>
-      <br />
-      <button onClick={queryBalance}>Query USDT Balance</button>
-      <br />
-      <br />
-      <button onClick={queryDefedChain}>Query Defed Support Chain</button>
-      <br />
-      <br />
-      <button onClick={handleApprove}>Approve</button>
-      <br />
-      <br />
-      <button onClick={handleDeposit}>Deposit</button>
-      <br />
-      <br />
-      <button onClick={handleWithdraw}>Withdraw</button>
-    </div>
+    <Router>
+      <div>
+        {/* <nav>
+          <ul>
+            <li>
+              <Link to="/">App</Link>
+            </li>
+            <li>
+              <Link to="/auth">auth</Link>
+            </li>
+          </ul>
+        </nav> */}
+        <Routes>
+          <Route path="/" element={<Dashboard />}>
+            {/* <Dashboard /> */}
+          </Route>
+          <Route path="/auth" element={<Auth />}>
+            {/* <Auth /> */}
+          </Route>
+        </Routes>
+      </div>
+    </Router>
+    
   );
 }
 
-export default App;
+
