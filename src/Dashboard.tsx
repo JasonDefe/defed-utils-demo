@@ -4,7 +4,7 @@ import { useApproveToDefedProtocol, useDepositToDefedProtocol, useWithdrawFromDe
 import { getAssetsBalance } from 'defedtestsdk'
 import { useWeb3Context } from "./hooks/useWeb3Context";
 import { WalletType } from "./constants/WalletOptions";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Route,
@@ -17,6 +17,13 @@ import {
 const mockToken = {
   symbol: "USDT",
   token: "0x544C2007F306c1394D006193A03e13CFA541d28C",
+  decimals: "6",
+}
+
+//测试 eth USDT 入金
+const mockUSDTToken = {
+  symbol: "USDT",
+  token: "0x7540781616FEc8C504E770784b8F690835aCe2A1",
   decimals: "6",
 }
 
@@ -51,22 +58,41 @@ export default function Dashboard() {
   const { currentAccount, connectWallet, chainId, signTxData } = useWeb3Context()
   console.log('currentAccount', currentAccount)
 
+  //配置环境
   configEnv(0)
   
 
-  const { requireApprove, getAllowance, approve, pollingApprove } = useApproveToDefedProtocol(mockToken.token,
+  //授权相关
+  const { requireApprove, getAllowance, approveForDapp, pollingApprove } = useApproveToDefedProtocol(
+    mockUSDTToken.token,
     currentAccount
   )
-  const { getAssetBalance, depositERC20, depositETH, depositToDapp  } = useDepositToDefedProtocol(mockToken.token, _amount, '0xeb843865B0B164bA9bcf71bBC198c7AbdBb1B6f6', currentAccount)
 
-  const { getWithdrawAsset, withdrawFromDapp } = useWithdrawFromDefed()
+  const { depositToDapp, getAssetBalance  } = useDepositToDefedProtocol()
+
+  const { withdrawFromDapp } = useWithdrawFromDefed()
   
   const [usdtBalance, setUsdtBalance] = useState('')
+  const [defeSupportChain, setDefeSupportChain] = useState(0)
+  const [defeShowChain, setDefeShowChain] = useState('')
+  const [whetherApprove, setWhetherApprove] = useState(false)
+  const [latestAllowcap, setLatestAllowcap] = useState(0)
+  const [approveStatus, setApproveStatus] = useState(false)
 
-  getAllowance()
+  // getAllowance()
    
   
   console.log('requireApprove', requireApprove)
+
+  useEffect(() => {
+    if (!currentAccount) return
+    if (defeSupportChain === 0) {
+      setDefeShowChain('请先点击Query Defed Support Chain按钮')
+    } else if (defeSupportChain === 5) {
+      setDefeShowChain('Ethereum Goerli 测试网络')
+    }
+  }, [defeSupportChain, currentAccount])
+
 
   const connectMetamask = () => {
     connectWallet(WalletType.INJECTED)
@@ -95,56 +121,43 @@ export default function Dashboard() {
   const queryDefedChain = () => {
     supportChain().then((res) => {
       console.log('supportChains', res)
+      if (res.length >= 1) {
+        setDefeSupportChain(res[0])
+      }
       return res
     }).catch((error) => {
       throw error
     })
   }
 
+  const queryApproveTxStatus = async () => {
+    const txStatus = await pollingApprove()
+    console.log('pollingApprove()+status', txStatus)
+    setLatestAllowcap(txStatus.allowance)
+    setApproveStatus(txStatus.requireApprove)
+  }
+
+  const handleQueryApprove = async () => {
+    // await getAllowance()
+    console.log('requireApprove+allownce+new', requireApprove)
+    // setWhetherApprove(requireApprove)
+  }
+
+  const handleApprove = async () => {
+    if (!currentAccount) return;
+    approveForDapp('1', mockUSDTToken.token, 'USDT', currentAccount)
+    //v1.1
+  }
+
   const handleDeposit = () => {
-    // getAssetBalance('0x544C2007F306c1394D006193A03e13CFA541d28C').then((res) => {
-    //   //返回bignumber result
-    //   console.log('res', res)
-    // }).catch((error) => {
-    //   console.log('error', error)
-    // })
-
-    //v1.0
-    // depositERC20().then((res) => {
-    //   console.log('novamax+depositERC20', res.hash)
-    //   return res.hash
-    // }).catch((error) => {
-    //   throw error
-    // })
-
-
-    //https://dev.defed.finance/dapp/?action=deposit&client_id=1&token=0x7540781616FEc8C504E770784b8F690835aCe2A1&symbol=USDT&to=0x4d82e5Ad6d6e30e30eEC400373f909E0fDc71c11&amount=100.0000&from=0x6a15bbef1a59b2cb25e79bd48970e54c4a1fa3cd&isCredit=false&interestRateMode=2
     //v1.1
     depositToDapp('1', '0x7540781616FEc8C504E770784b8F690835aCe2A1', 'USDT', '100.0000', '0x6a15bbef1a59b2cb25e79bd48970e54c4a1fa3cd')
   }
 
-  const handleApprove = async () => {
-    await getAllowance()
-    console.log('requireApprove+allownce', requireApprove)
-    //v1.1
-    //https://dev.defed.finance/dapp/?action=approve&client_id=1&token=0x7540781616FEc8C504E770784b8F690835aCe2A1&symbol=USDT&to=0x4d82e5Ad6d6e30e30eEC400373f909E0fDc71c11&from=0x6a15bbef1a59b2cb25e79bd48970e54c4a1fa3cd
-
-    //v1.0
-    // if (requireApprove) { //requireApprove true for user need to approve
-      
-    // } else {
-    //   //切换approve按钮为deposit按钮
-    // }
-    // approve().then(async (res) => {
-    //   console.log('approve+tx', res)
-    //   // await res.wait()
-    //   await getAllowance()
-    // }).catch((error) => {
-    //   throw error
-    // })
+  const handleQueryDeposit = () => {
+    window.open('https://mumbai.polygonscan.com/address/0x4d82e5ad6d6e30e30eec400373f909e0fdc71c11#tokentxns')
   }
 
-  
   const handleWithdraw = async () => {
     //v1.0
     // getWithdrawAsset(withdrawData, 80001, currentAccount).then((res) => {
@@ -183,7 +196,7 @@ export default function Dashboard() {
       <img src='/logos/novamax.png' alt='novamaxlogo' />
       <br />
       <br />
-      <button onClick={connectDefedAccount}>Connect DEFED</button>
+      <button onClick={connectMetamask}>Connect DEFED</button>
       <div>user address:{currentAccount}</div>
       <br />
       <button onClick={queryBalance}>Query USDT Balance</button>
@@ -191,19 +204,30 @@ export default function Dashboard() {
       <br />
       <button onClick={queryDefedChain}>Query Defed Support Chain</button>
       <br />
+      <div>Defed chain dev: {defeShowChain}</div>
+      <br />
+      <br />
+      <button onClick={handleQueryApprove}>查询用户是否需要Approve USDT</button>
+      <br />
+      <div>当前用户{currentAccount}: {!requireApprove ? '已授权USDT' : '未授权USDT'}</div>
+      <br />
       <br />
       <button onClick={handleApprove}>Approve</button>
       <br />
       <br />
+      <button onClick={queryApproveTxStatus}>查询最新的Approve状态</button>
       <br />
-      {/* <button onClick={queryL1Balance}>Query Metamask USDT Balance</button>
+      <div>当前用户Allow: {latestAllowcap}, Approve状态:{!approveStatus ? 'Success' : 'fail'}</div>
       <br />
-      <div>user usdt balance before deposit from Metamask wallet:{usdtBalance}</div> */}
-      <button onClick={handleDeposit}>Deposit</button>
+      <br />
+      <br />
+      <button onClick={handleDeposit}>Deposit To Novamax</button>
+      <br />
+      <br />
+      <button onClick={handleQueryDeposit}>Query DepositToNovamax Transaction Status</button>
       <br />
       <br />
       <button onClick={handleWithdraw}>Withdraw 30U To Metamask wallet</button>
-      {/* <div>user usdt balance:{usdtBalance}</div> */}
       <br />
       <br />
       <button onClick={handleWithdrawFromMax}>Withdraw 30USDT To DEFED saving</button>
