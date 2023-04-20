@@ -1,6 +1,6 @@
 import { configEnv, supportChain } from 'defedtestsdk'
 import { useDepositContract, useApproveToDefed, getWithdrawSignData } from 'defedtestsdk/dist/src/hooks/useDefedProtocol'
-import { useApproveToDefedProtocol, useDepositToDefedProtocol, useWithdrawFromDefed } from 'defedtestsdk'
+import { useApproveToDefedProtocol, useDepositToDefedProtocol, useWithdrawFromDefed, useDefedProtocolFee } from 'defedtestsdk'
 import { getAssetsBalance } from 'defedtestsdk'
 import { useWeb3Context } from "./hooks/useWeb3Context";
 import { WalletType } from "./constants/WalletOptions";
@@ -70,7 +70,8 @@ export default function Dashboard() {
 
   const { depositToDapp, getAssetBalance  } = useDepositToDefedProtocol()
 
-  const { withdrawFromDapp } = useWithdrawFromDefed()
+  const { loading, estAmount, getBridgeAndNetworkFee } = useDefedProtocolFee()
+  const { withdrawFromDapp, getWithdrawType } = useWithdrawFromDefed()
   
   const [usdtBalance, setUsdtBalance] = useState('')
   const [defeSupportChain, setDefeSupportChain] = useState(0)
@@ -154,6 +155,22 @@ export default function Dashboard() {
 
   const handleQueryDeposit = () => {
     window.open('https://mumbai.polygonscan.com/address/0x4d82e5ad6d6e30e30eec400373f909e0fdc71c11#tokentxns')
+  }
+
+  const handleQueryWithdrawalToType = async () => {
+    const withdrawalTypes = await getWithdrawType('1')
+    console.log('withdrawalTypes', withdrawalTypes)
+  }
+
+  const handleEstimateWithdrawalFee = async () => {
+    if (!currentAccount) return;
+    const estFee =  await getBridgeAndNetworkFee(
+      '0xA09f65e60d796eaAf5856D61781daE3F8194bf7E', 
+      '300.000000', 
+      '6', 
+      currentAccount
+    )
+    console.log('loading+estFee', loading, estFee)
   }
 
   const handleWithdraw = async () => {
@@ -243,6 +260,12 @@ export default function Dashboard() {
       <br />
       <br />
       <button onClick={handleQueryDeposit}>Query DepositToNovamax Transaction Status</button>
+      <br />
+      <br />
+      <button onClick={handleQueryWithdrawalToType}>Query From Novamax withdrawal to types</button>
+      <br />
+      <br />
+      <button onClick={handleEstimateWithdrawalFee}>Estimate From Novamax withdrawal Fee</button>
       <br />
       <br />
       <button onClick={handleWithdraw}>Withdraw 30U To Metamask wallet</button>
