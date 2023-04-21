@@ -70,7 +70,24 @@ export default function Dashboard() {
 
   const { depositToDapp, getAssetBalance  } = useDepositToDefedProtocol()
 
-  const { loading, estAmount, getBridgeAndNetworkFee } = useDefedProtocolFee()
+  const { loading: ethereumLoading, protocolFee: ethereumFee, estNetworkFee: ethNetworkFee } = useDefedProtocolFee(
+    '0xA09f65e60d796eaAf5856D61781daE3F8194bf7E', 
+    '30.000000',
+    '6',
+    '0x6a15bbef1a59b2cb25e79bd48970e54c4a1fa3cd',
+    1,
+    false
+  )
+
+  const { loading: defedSavingLoading, protocolFee: defedSavingFee, estNetworkFee: estDefedSavingFee } = useDefedProtocolFee(
+    '0xA09f65e60d796eaAf5856D61781daE3F8194bf7E', 
+    '30.000000', 
+    '6',
+    '0x6a15bbef1a59b2cb25e79bd48970e54c4a1fa3cd',
+    2,
+    false
+  )
+
   const { withdrawFromDapp, getWithdrawType } = useWithdrawFromDefed()
   
   const [usdtBalance, setUsdtBalance] = useState('')
@@ -162,15 +179,26 @@ export default function Dashboard() {
     console.log('withdrawalTypes', withdrawalTypes)
   }
 
-  const handleEstimateWithdrawalFee = async () => {
+  const handleEstimateWithdrawalToEthereum = async () => {
     if (!currentAccount) return;
-    const estFee =  await getBridgeAndNetworkFee(
-      '0xA09f65e60d796eaAf5856D61781daE3F8194bf7E', 
-      '300.000000', 
-      '6', 
-      currentAccount
-    )
-    console.log('loading+estFee', loading, estFee)
+    // const estFee =  await getBridgeAndNetworkFee(
+    //   '0xA09f65e60d796eaAf5856D61781daE3F8194bf7E', 
+    //   '300.000000', 
+    //   '6', 
+    //   currentAccount
+    // )
+    // console.log('loading+estFee', loading, estFee)
+  }
+
+  const handleEstimateWithdrawalToDefedSaving = async () => {
+    if (!currentAccount) return;
+    // const estFee =  await getBridgeAndNetworkFee(
+    //   '0xA09f65e60d796eaAf5856D61781daE3F8194bf7E', 
+    //   '300.000000', 
+    //   '6', 
+    //   currentAccount
+    // )
+    // console.log('loading+estFee', loading, estFee)
   }
 
   const handleWithdraw = async () => {
@@ -212,7 +240,7 @@ export default function Dashboard() {
 
   const handleWithdrawFromMax= async () => {
     // v1.1
-    withdrawFromDapp('1', '0xA09f65e60d796eaAf5856D61781daE3F8194bf7E', 'USDT', '0x6a15bbef1a59b2cb25e79bd48970e54c4a1fa3cd', '0x97ab293f2b01eb8b283bd5e81b5adb4cbad40f41', 'true', '30.0000', '2999999666666', '0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000016e0fab246801000000000000000000000000000000000000000000000000000000002ba7dea19ea00000000000000000000000097ab293f2b01eb8b283bd5e81b5adb4cbad40f41000000000000000000000000a09f65e60d796eaaf5856d61781dae3f8194bf7e0000000000000000000000000000000000000000000000000000000001c9c380', '0xcc0a62347e532ea358b6d6cd66b8fbb3f8929249dbc3974b4ca04953507febd700296a4466b62df5d74ac5a41d67a3aca1e2f490b9b712fb68956b06d124f7cb00')
+    withdrawFromDapp('1', '0xA09f65e60d796eaAf5856D61781daE3F8194bf7E', 'USDT', '0x6a15bbef1a59b2cb25e79bd48970e54c4a1fa3cd', '0x97ab293f2b01eb8b283bd5e81b5adb4cbad40f41', 'true', '30.0000', '3999999888888', '0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000016e3a21c68001000000000000000000000000000000000000000000000000000000003a352928df800000000000000000000000097ab293f2b01eb8b283bd5e81b5adb4cbad40f41000000000000000000000000a09f65e60d796eaaf5856d61781dae3f8194bf7e0000000000000000000000000000000000000000000000000000000001c9c380', '0xc271e23c30c20fd7f4bf9b0327b03b70da85f20236a99c73ae829ff2e252288009a354988a9079df8af4214f9451c11d7fff91f2e2349295acf030b22eef394001')
     // withdrawFromDapp('1', 
     //   '0xA09f65e60d796eaAf5856D61781daE3F8194bf7E', 
     //   'USDT', 
@@ -262,10 +290,21 @@ export default function Dashboard() {
       <button onClick={handleQueryDeposit}>Query DepositToNovamax Transaction Status</button>
       <br />
       <br />
-      <button onClick={handleQueryWithdrawalToType}>Query From Novamax withdrawal to types</button>
+      <button onClick={handleQueryWithdrawalToType}>Query From Novamax withdrawal to Types</button>
       <br />
       <br />
-      <button onClick={handleEstimateWithdrawalFee}>Estimate From Novamax withdrawal Fee</button>
+      <button onClick={handleEstimateWithdrawalToEthereum}>Estimate From Novamax withdraw To Ethereum wallet Fee</button>
+      <br />
+      <div>withdraw To Ethereum wallet Fee---DEFED Protocol Fee: {ethereumFee} USDT, Network Fee: {ethNetworkFee}USDT</div>
+      <br />
+      <br />
+      <button onClick={handleEstimateWithdrawalToDefedSaving}>Estimate From Novamax withdraw To DEFED Saving Fee</button>
+      <br />
+      <div>实收---DEFED Protocol Fee: {defedSavingFee} USDT</div>
+      <br />
+      <button onClick={handleEstimateWithdrawalToDefedSaving}>Estimate From Novamax withdraw To DEFED Saving Fee</button>
+      <br />
+      <div>应收---DEFED Protocol Fee: {estDefedSavingFee} USDT</div>
       <br />
       <br />
       <button onClick={handleWithdraw}>Withdraw 30U To Metamask wallet</button>
